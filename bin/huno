@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require_relative '../lib/hugo_notion/synchronizer'
 
 def do_exit

@@ -12,7 +12,9 @@ Gem::Specification.new do |s|
   s.summary       = "Write in Notion. Publish with Hugo."
   s.description   = "Write in Notion. Publish with Hugo."
 
-  s.files = Dir["{lib}/**/*", "README.md"]
+  s.files = Dir["{lib,bin}/**/*", "README.md"]
+  s.executables << 'huno'
+  s.bindir = 'bin'
 
   s.add_dependency "httparty"
   s.add_dependency "notion_to_md"
