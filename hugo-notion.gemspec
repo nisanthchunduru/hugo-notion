@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.email         = ["nisanth074@gmail.com"]
   s.homepage      = "https://github.com/nisanthchunduru/hugo-notion"
   s.summary       = "Write in Notion. Publish with Hugo."
-  s.description   = "Write in Notion. Publish with Hugo."
+  s.description   = "Use Notion as a CMS (Content Management System) for your Hugo site"
 
   s.files = Dir["{lib,bin}/**/*", "README.md"]
   s.executables << 'huno'
