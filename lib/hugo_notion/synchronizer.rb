@@ -62,7 +62,7 @@ class Synchronizer
       existing_page_file_names = Dir.entries(destination_dir).select { |f| !File.directory? f }
       page_file_names = []
       notion_blocks.each do |notion_block|
-        notion_block_id = notion_notion_block['id']
+        notion_block_id = notion_block['id']
 
         if notion_block['type'] == 'child_database'
           notion_child_database_title = notion_block['child_database']['title']
@@ -79,11 +79,11 @@ class Synchronizer
           'date' => Time.parse(notion_block['created_time'])
         }
         if notion_block['properties']
-          if block.dig('properties', 'date', 'date', 'start')
+          if notion_block.dig('properties', 'date', 'date', 'start')
             page_front_matter['date'] = Time.parse(notion_block['properties']['date']['date']['start'])
           end
 
-          if block.dig('properties', 'Name', 'title', 0, 'plain_text')
+          if notion_block.dig('properties', 'Name', 'title', 0, 'plain_text')
             page_front_matter['title'] = notion_block['properties']['Name']['title'][0]['plain_text']
           end
         end
@@ -107,7 +107,7 @@ class Synchronizer
         end
 
         page_front_matter_yaml = page_front_matter.to_yaml.chomp
-        page_markdown = NotionToMd.convert(notion_page_id: notion_block_id, token: NOTION_TOKEN)
+        page_markdown = NotionToMd.convert(page_id: notion_block_id, token: NOTION_TOKEN)
         page_content = <<-page_CONTENT
 #{page_front_matter_yaml}
 ---
