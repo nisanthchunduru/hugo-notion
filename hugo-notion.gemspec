@@ -11,6 +11,7 @@ Gem::Specification.new do |s|
   s.homepage      = "https://github.com/nisanthchunduru/hugo-notion"
   s.summary       = "Write in Notion. Publish with Hugo."
   s.description   = "Use Notion as a CMS (Content Management System) for your Hugo site"
+  s.license       = "MIT"
 
   s.files = Dir["{lib,bin}/**/*", "README.md"]
   s.executables << 'huno'
