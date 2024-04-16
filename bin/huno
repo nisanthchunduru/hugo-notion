@@ -15,7 +15,7 @@ end
 notion_page_url = ARGV[0]
 notion_page_id = URI(notion_page_url).path.match(/-(?<page_id>.*)\z/)['page_id']
 
-destination_dir = Dir.pwd
+destination_dir = File.join(Dir.pwd, 'content')
 if ARGV[1]
   if Pathname.new(ARGV[1]).absolute?
     destination_dir = ARGV[1]
