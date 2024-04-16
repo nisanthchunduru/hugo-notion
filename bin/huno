@@ -24,12 +24,9 @@ if ARGV[1]
   end
 end
 
-loop do
-  puts "Syncing posts from Notion..."
-  Synchronizer.run(
-    notion_page_id: notion_page_id,
-    destination_dir: destination_dir
-  )
-  puts "Done."
-  sleep 10
-end
+puts "Syncing posts from Notion..."
+Synchronizer.run(
+  notion_page_id: notion_page_id,
+  destination_dir: destination_dir
+)
+puts "Done."
