@@ -1,4 +1,4 @@
-env_file_path = File.expand_path('../../.env', File.dirname(__FILE__))
+env_file_path = File.join(Dir.pwd, '.env')
 if File.exist?(env_file_path)
   require 'dotenv'
   Dotenv.load(env_file_path)
