@@ -2,7 +2,6 @@ require 'httparty'
 require 'notion-ruby-client'
 require 'notion_to_md'
 require 'yaml'
-require 'pry'
 
 class NotionApi
   BASE_URL = "https://api.notion.com/v1"
