@@ -2,7 +2,13 @@
 
 Write in Notion. Publish with Hugo.
 
+Use Notion as a CMS (Content Management System) for your Hugo site/blog.
+
+`hugo-notion` is a command line (CLI) tool to sync your Notion page to your Hugo site's/blog's `content` directory.
+
 ## Installation
+
+`hugo-notion` is a Ruby gem. Use the `gem` command to install it
 
 ```
 gem install hugo-notion --prerelease
