@@ -24,24 +24,19 @@ NOTION_TOKEN=your_notion_secret huno your_notion_page_url
 
 If you're yet to move your Hugo pages to Notion, you can use my "blog_content" Notion page as a template https://www.notion.so/blog_content-0f1b55769779411a95df1ee9b4b070c9
 
-## Tips
-
-If you'd like `huno` to sync Notion pages to a different directory, you can do that too
-
-```
-NOTION_TOKEN=your_notion_secret huno your_notion_page_url site_content/
-```
-
-To avoid having to provide the `NOTION_TOKEN` env var again and again, you can create a `.env` file
+To avoid having to provide the notion token and notion page url again and again, create an .env file
 
 ```
 echo 'NOTION_TOKEN=your_notion_secret' > .env
+echo 'CONTENT_NOTION_URL=your_notion_page_url >> .env'
 ```
+
+## Tips
 
 To run `huno` say, every 15 seconds, use the `watch` command
 
 ```
-watch -n15 huno your_notion_page_url
+watch -n15 huno
 ```
 
 If you're on MacOS and don't have the `watch` command installed, you can use Homebrew to install it

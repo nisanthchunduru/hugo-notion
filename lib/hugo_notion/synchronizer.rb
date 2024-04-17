@@ -1,15 +1,3 @@
-env_file_path = File.join(Dir.pwd, '.env')
-if File.exist?(env_file_path)
-  require 'dotenv'
-  Dotenv.load(env_file_path)
-end
-notion_token = ENV['NOTION_TOKEN']
-unless notion_token
-  throw "Please create a Notion integration, generate a secret and provide it in the 'NOTION_TOKEN' environment variable"
-end
-
-NOTION_TOKEN = ENV['NOTION_TOKEN']
-
 require 'httparty'
 require 'notion-ruby-client'
 require 'notion_to_md'
@@ -51,7 +39,7 @@ class Synchronizer
       destination_dir = options[:destination_dir]
       Dir.mkdir(destination_dir) unless Dir.exist?(destination_dir)
 
-      notion = NotionApi.new(NOTION_TOKEN)
+      notion = NotionApi.new(ENV.fetch('NOTION_TOKEN'))
       response = if notion_database_id
         notion.post("/databases/#{notion_database_id}/query")
       elsif notion_page_id
@@ -107,7 +95,7 @@ class Synchronizer
         end
 
         page_front_matter_yaml = page_front_matter.to_yaml.chomp
-        page_markdown = NotionToMd.convert(page_id: notion_block_id, token: NOTION_TOKEN)
+        page_markdown = NotionToMd.convert(page_id: notion_block_id, token: ENV.fetch('NOTION_TOKEN'))
         page_content = <<-page_CONTENT
 #{page_front_matter_yaml}
 ---

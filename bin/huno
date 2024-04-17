@@ -1,32 +1,43 @@
 #!/usr/bin/env ruby
 
-require_relative '../lib/hugo_notion/synchronizer'
+env_file_path = File.join(Dir.pwd, '.env')
+if File.exist?(env_file_path)
+  require 'dotenv'
+  Dotenv.load(env_file_path)
+end
+notion_token = ENV['NOTION_TOKEN']
+unless notion_token
+  throw "Please create a Notion integration, generate a secret and provide it in the 'NOTION_TOKEN' environment variable"
+end
 
+content_notion_url = if ARGV[0]
+  ARGV[0]
+else
+  ENV.fetch('CONTENT_NOTION_URL')
+end
+unless content_notion_url
+  throw "Please provide the URL of the Notion page you'd like to sync in the `CONTENT_NOTION_URL` environment variable or as the first argument"
+end
+notion_page_id = URI(content_notion_url).path.match(/-(?<page_id>.*)\z/)['page_id']
+
+content_dir = File.join(Dir.pwd, 'content')
+if ARGV[1]
+  content_dir = ARGV[1]
+elsif ENV.fetch('CONTENT_DIR')
+  content_dir = ENV.fetch('CONTENT_DIR')
+end
+content_dir = File.expand_path(content_dir, Dir.pwd)
+
+require_relative '../lib/hugo_notion/synchronizer'
 def do_exit
   puts 'Exiting...'
   exit
 end
 Signal.trap("TERM") { do_exit }
 Signal.trap("INT") { do_exit }
-
-if !ARGV[0]
-  puts "Please provide the URL of the Notion page you'd like to sync as the first argument"
-end
-notion_page_url = ARGV[0]
-notion_page_id = URI(notion_page_url).path.match(/-(?<page_id>.*)\z/)['page_id']
-
-destination_dir = File.join(Dir.pwd, 'content')
-if ARGV[1]
-  if Pathname.new(ARGV[1]).absolute?
-    destination_dir = ARGV[1]
-  else
-    destination_dir = File.join(Dir.pwd, ARGV[1])
-  end
-end
-
-puts "Syncing posts from Notion..."
+puts "Syncing content from Notion..."
 Synchronizer.run(
   notion_page_id: notion_page_id,
-  destination_dir: destination_dir
+  destination_dir: content_dir
 )
 puts "Done."
