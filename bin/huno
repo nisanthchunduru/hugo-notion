@@ -25,8 +25,8 @@ notion_page_id = URI(content_notion_url).path.match(/-(?<page_id>.*)\z/)['page_i
 content_dir = File.join(Dir.pwd, 'content')
 if ARGV[1]
   content_dir = ARGV[1]
-elsif ENV.fetch('CONTENT_DIR')
-  content_dir = ENV.fetch('CONTENT_DIR')
+elsif ENV['CONTENT_DIR']
+  content_dir = ENV['CONTENT_DIR']
 end
 content_dir = File.expand_path(content_dir, Dir.pwd)
 
