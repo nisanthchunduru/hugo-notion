@@ -1,8 +1,16 @@
 #!/usr/bin/env ruby
 
+require 'slop'
 require 'uri'
 
-env_file_path = File.join(Dir.pwd, '.env')
+default_env_file_path = File.join(Dir.pwd, '.env')
+opts = Slop.parse do |o|
+  o.integer '-r', '--repeat', default: 10
+  o.string '-e', '--env-file', default: default_env_file_path
+end
+
+env_file_path = opts[:env_file]
+env_file_path = File.expand_path(env_file_path)
 if File.exist?(env_file_path)
   require 'dotenv'
   Dotenv.load(env_file_path)
@@ -12,8 +20,8 @@ unless notion_token
   throw "Please create a Notion integration, generate a secret and provide it in the 'NOTION_TOKEN' environment variable"
 end
 
-content_notion_url = if ARGV[0]
-  ARGV[0]
+content_notion_url = if opts.arguments[0]
+  opts.arguments[0]
 else
   ENV.fetch('CONTENT_NOTION_URL')
 end
@@ -23,23 +31,43 @@ end
 notion_page_id = URI(content_notion_url).path.match(/-(?<page_id>.*)\z/)['page_id']
 
 content_dir = File.join(Dir.pwd, 'content')
-if ARGV[1]
-  content_dir = ARGV[1]
+if opts.arguments[1]
+  content_dir = opts.arguments[1]
 elsif ENV['CONTENT_DIR']
   content_dir = ENV['CONTENT_DIR']
 end
 content_dir = File.expand_path(content_dir, Dir.pwd)
 
-require_relative '../lib/hugo_notion/synchronizer'
 def do_exit
   puts 'Exiting...'
   exit
 end
 Signal.trap("TERM") { do_exit }
 Signal.trap("INT") { do_exit }
-puts "Syncing content from Notion..."
-Synchronizer.run(
-  notion_page_id: notion_page_id,
-  destination_dir: content_dir
-)
-puts "Done."
+
+require_relative '../lib/hugo_notion/synchronizer'
+
+sync_content = Proc.new do
+  puts "Syncing content from Notion..."
+  Synchronizer.run(
+    notion_page_id: notion_page_id,
+    destination_dir: content_dir
+  )
+  puts "Done."
+end
+
+if opts.r?
+  loop do
+    begin
+      sync_content.call
+      sleep opts[:r]
+    rescue => e
+      puts "Sync failed."
+      puts e.message
+      puts e.backtrace
+    end
+  end
+else
+  sync_content.call
+  exit
+end

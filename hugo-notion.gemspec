@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
   s.bindir = 'bin'
 
   s.add_dependency "dotenv"
+  s.add_dependency "slop"
   s.add_dependency "httparty"
   s.add_dependency "notion_to_md"
   s.add_dependency "yaml"
