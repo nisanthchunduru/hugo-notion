@@ -28,29 +28,30 @@ NOTION_TOKEN=your_notion_secret huno your_notion_page_url
 
 `huno` will sync your Notion page and its children pages to the `content` directory.
 
-If you're yet to move your Hugo pages to Notion, you can use my "blog_content" Notion page as a template https://www.notion.so/blog_content-0f1b55769779411a95df1ee9b4b070c9
+`huno` can also sync your Notion page periodically every 10 seconds. To do so, run
 
-To avoid having to provide the notion token and notion page url again and again, create an .env file
+```
+huno -r
+```
+
+If you'd like to sync at a different frequency (say, 5 seconds), run
+
+```
+huno -r 5
+```
+To avoid the hassle of providing your Notion token and your Notion page url to `huno` every time you run it, create an .env file
 
 ```
 echo 'NOTION_TOKEN=your_notion_secret' > .env
 echo 'CONTENT_NOTION_URL=your_notion_page_url >> .env'
 ```
 
-## Tips
+### Migration
 
-To run `huno` say, every 15 seconds, use the `watch` command
+For an easy migration to Noiton, you can use my "blog_content" Notion page as a template https://www.notion.so/ blog_content-0f1b55769779411a95df1ee9b4b070c9
 
-```
-watch -n15 huno
-```
-
-If you're on MacOS and don't have the `watch` command installed, you can use Homebrew to install it
-
-```
-brew install watch
-```
+I recommend that you move one page from Notion to Hugo first, try hugo-notion to sync that page and once you're happy with hugo-notion, move your other Hugo pages to Notion one by one.
 
 ## Bug Reports
 
-If you'd like to report a bug (if there are any, please do), please create a GitHub issue
+If you hit a bug, please do report it by creating a GitHub issue
