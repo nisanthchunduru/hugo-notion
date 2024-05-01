@@ -1,75 +1,95 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
+
+	"github.com/joho/godotenv"
+	"github.com/nisanthchunduru/hugo-notion/notion_api_client"
+	// "github.com/kjk/notionapi"
+	// "github.com/kjk/notionapi/tomarkdown"
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		printErrorAndExit(err)
+	}
+
 	token := os.Getenv("NOTION_TOKEN")
 	if token == "" {
 		fmt.Println("Please create a Notion integration, generate a secret and provide it in the 'NOTION_TOKEN' environment variable")
 		os.Exit(1)
 	}
 
-	version := "2022-02-22"
-	url := "https://api.notion.com/v1/blocks/0f1b55769779411a95df1ee9b4b070c9/children?page_size=100"
+	notionApiClient := &notion_api_client.NotionApiClient{
+		Token: token,
+	}
+	if _, err := os.Stat("content"); os.IsNotExist(err) {
+		os.Mkdir("content", 0755)
+	}
 
-	// response, err := http.Get(url)
+	// err, responseMap := notionApiClient.Get("/v1/blocks/0f1b55769779411a95df1ee9b4b070c9/children?page_size=100")
 	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
+	// 	printErrorAndExit(err)
 	// }
-	// responseBody, err := io.ReadAll(response.Body)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
+
+	// fmt.Println(responseMap)
+
+	// for _, _block := range responseMap["results"].([]interface{}) {
+	// 	block := _block.(map[string]interface{})
+	// 	if block["type"] == "child_page" {
+	// 		childPageId := block["id"].(string)
+
+	// 		childPageTitle := block["child_page"].(map[string]interface{})["title"].(string)
+	// 		err, getChildPageChildrenResponseMap := notionApiClient.GetBlockChildren(childPageId)
+	// 		if err != nil {
+	// 			printErrorAndExit(err)
+	// 		}
+	// 		fmt.Println(getChildPageChildrenResponseMap)
+
+	// 		tokenV2CookieString := "dummyTokenV2CookieString"
+	// 		kjkNotionApiClient := &notionapi.Client{
+	// 			AuthToken: tokenV2CookieString,
+	// 		}
+	// 		markdown, err := kjkNotionApiClient.ExportPages(childPageId, "markdown", false)
+	// 		if err != nil {
+	// 			printErrorAndExit(fmt.Errorf("MarkdownExportFailed: %w", err))
+	// 		}
+	// 		fmt.Println(markdown)
+	// 		childPage, err := kjkNotionApiClient.DownloadPage(childPageId)
+	// 		if err != nil {
+	// 			printErrorAndExit(err)
+	// 		}
+	// 		markdown := tomarkdown.NewConverter(childPage).ToMarkdown()
+	// 		fmt.Println(string(markdown))
+	// 	}
 	// }
-	// fmt.Println(string(responseBody))
 
-	client := &http.Client{}
-	request, err := http.NewRequest("GET", url, nil)
+	response, err := notionApiClient.Get("/v1/blocks/0f1b55769779411a95df1ee9b4b070c9/children?page_size=100")
 	if err != nil {
 		printErrorAndExit(err)
 	}
-	request.Header.Set("Authorization", "Bearer "+token)
-	request.Header.Set("Notion-Version", version)
-	response, err := client.Do(request)
-	if err != nil {
-		printErrorAndExit(err)
-	}
-	defer response.Body.Close()
-	responseJson, err := io.ReadAll(response.Body)
-	if err != nil {
-		printErrorAndExit(err)
-	}
-
-	// fmt.Println(string(responseBody))
-
-	// prettyPrintResponseJson(string(responseJson))
-
-	var responseMap map[string]interface{}
-	err = json.Unmarshal(responseJson, &responseMap)
-	if err != nil {
-		printErrorAndExit(err)
+	for _, block := range response.Results {
+		if block.Type == "child_page" {
+			childPageId := block.Id
+			getBlockChildrenResponse, err := notionApiClient.GetBlockChildren(childPageId)
+			if err != nil {
+				printErrorAndExit(err)
+			}
+			fmt.Println(notion_api_client.ConvertBlocksToMarkdown(getBlockChildrenResponse.Results))
+			// for _, childPageBlock := range getBlockChildrenResponse.Results {
+			// 	if childPageBlock.Type == "heading_1" {
+			// 		for _, richTextBlock := range childPageBlock.Heading1.RichText {
+			// 			fmt.Println(richTextBlock.PlainText)
+			// 		}
+			// 	}
+			// }
+		}
 	}
 }
 
 func printErrorAndExit(err error) {
 	fmt.Println(err)
 	os.Exit(1)
-}
-
-func prettyPrintResponseJson(responseJson string) {
-	var prettyJSON bytes.Buffer
-	err := json.Indent(&prettyJSON, []byte(responseJson), "", "  ")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	fmt.Println(string(prettyJSON.Bytes()))
 }
