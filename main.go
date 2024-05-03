@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -51,10 +54,53 @@ func main() {
 	pathFragments := strings.Split(parsedContentNotionUrl.Path, "-")
 	contentNotionPageId := pathFragments[len(pathFragments)-1]
 
+	repeatFlagIndex := -1
+	for i, arg := range os.Args {
+		if arg == "-r" {
+			repeatFlagIndex = i
+			break
+		}
+	}
+	shouldRepeat := (repeatFlagIndex != -1)
+	repeatInterval := 10 // Default repeat interval
+	if shouldRepeat {
+		if repeatFlagIndex+1 < len(os.Args) {
+			_repeatInterval, err := strconv.Atoi(os.Args[repeatFlagIndex+1])
+			if err == nil {
+				repeatInterval = _repeatInterval
+			}
+		}
+	}
+
 	jomeiNotionApiClient := notionapi.NewClient(notionapi.Token(notionToken))
-	fmt.Println("Syncing content from Notion...")
+	if shouldRepeat {
+		syncPeriodically(jomeiNotionApiClient, contentNotionPageId, contentDir, repeatInterval)
+	} else {
+		fmt.Println("Syncing content from Notion...")
+		sync(jomeiNotionApiClient, contentNotionPageId, contentDir)
+		fmt.Println("Done.")
+	}
+
+}
+
+func syncPeriodically(jomeiNotionApiClient *notionapi.Client, contentNotionPageId string, contentDir string, repeatInterval int) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Println("Stopping...")
+		os.Exit(0)
+	}()
+	for {
+		fmt.Println("Syncing content from Notion...")
+		sync(jomeiNotionApiClient, contentNotionPageId, contentDir)
+		fmt.Printf("Done. Content will be synced again after %d seconds.\n", repeatInterval)
+		time.Sleep(time.Duration(repeatInterval) * time.Second)
+	}
+}
+
+func sync(jomeiNotionApiClient *notionapi.Client, contentNotionPageId string, contentDir string) {
 	syncNotionPage(jomeiNotionApiClient, contentNotionPageId, contentDir)
-	fmt.Println("Done.")
 }
 
 func isValidUrl(url string) bool {
