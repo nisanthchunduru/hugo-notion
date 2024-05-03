@@ -141,10 +141,12 @@ func ConvertRichTextsToMarkdown(richTexts []notionapi.RichText) string {
 	var markdowns []string
 	for _, block := range richTexts {
 		var markdown string
-		if block.Href == "" {
-			markdown = block.PlainText
-		} else {
+		if block.Href != "" {
 			markdown = fmt.Sprintf("[%s](%s)", block.PlainText, block.Href)
+		} else if block.Annotations.Code {
+			markdown = "`" + block.PlainText + "`"
+		} else {
+			markdown = block.PlainText
 		}
 		markdowns = append(markdowns, markdown)
 	}
