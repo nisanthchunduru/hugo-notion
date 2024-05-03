@@ -26,10 +26,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	hugoContentDir := os.Getenv("CONTENT_DIR")
-	if token == "" {
-		fmt.Println("Please provide your Hugo site's content directory path in the `HUGO_CONTENT_DIR` environment variable")
-		os.Exit(1)
+	hugoCONTENTDIR := os.Getenv("HUGO_CONTENT_DIR")
+	if hugoContentDir == "" {
+		hugoContentDir, _ = filepath.Abs("./content")
 	}
 
 	pageId := "0f1b55769779411a95df1ee9b4b070c9"
