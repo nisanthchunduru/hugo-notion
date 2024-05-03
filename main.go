@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/go-yaml/yaml"
 	"github.com/joho/godotenv"
 	"github.com/jomei/notionapi"
@@ -20,20 +22,43 @@ func main() {
 		printErrorAndExit(err)
 	}
 
-	token := os.Getenv("NOTION_TOKEN")
-	if token == "" {
+	notionToken := os.Getenv("NOTION_TOKEN")
+	if notionToken == "" {
 		fmt.Println("Please create a Notion integration, generate a secret and provide it in the 'NOTION_TOKEN' environment variable")
 		os.Exit(1)
 	}
 
-	hugoCONTENTDIR := os.Getenv("HUGO_CONTENT_DIR")
-	if hugoContentDir == "" {
-		hugoContentDir, _ = filepath.Abs("./content")
+	contentDir := os.Getenv("CONTENT_DIR")
+	if contentDir == "" {
+		contentDir, _ = filepath.Abs("./content")
 	}
 
-	pageId := "0f1b55769779411a95df1ee9b4b070c9"
-	jomeiNotionApiClient := notionapi.NewClient(notionapi.Token(token))
-	syncNotionPage(jomeiNotionApiClient, pageId, hugoContentDir)
+	var contentNotionUrl string
+	contentNotionUrl = os.Args[len(os.Args)-1]
+
+	if !isValidUrl(contentNotionUrl) && os.Getenv("CONTENT_NOTION_URL") != "" {
+		contentNotionUrl = os.Getenv("CONTENT_NOTION_URL")
+	}
+	if contentNotionUrl == "" {
+		fmt.Println("Please provide the URL of the Notion page you'd like to sync in the `CONTENT_NOTION_URL` environment variable or as the first argument")
+		os.Exit(1)
+	}
+	parsedContentNotionUrl, err := url.ParseRequestURI(contentNotionUrl)
+	if err != nil {
+		fmt.Println("The Notion URL you've provided is not a valid URL. Please provide a valid URL.")
+		os.Exit(1)
+	}
+	pathFragments := strings.Split(parsedContentNotionUrl.Path, "-")
+	contentNotionPageId := pathFragments[len(pathFragments)-1]
+
+	jomeiNotionApiClient := notionapi.NewClient(notionapi.Token(notionToken))
+	fmt.Println("Syncing content from Notion...")
+	syncNotionPage(jomeiNotionApiClient, contentNotionPageId, contentDir)
+	fmt.Println("Done.")
+}
+
+func isValidUrl(url string) bool {
+	return govalidator.IsRequestURL(url)
 }
 
 func syncNotionPage(jomeiNotionApiClient *notionapi.Client, pageIdString string, destinationDir string) {
