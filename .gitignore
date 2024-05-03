@@ -1,4 +1,6 @@
+.env
+
+bundle
 Gemfile.lock
 *.gem
 
-.env

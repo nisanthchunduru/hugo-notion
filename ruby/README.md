@@ -8,11 +8,13 @@ Use Notion as a CMS (Content Management System) for your Hugo site/blog.
 
 ## Installation
 
-`hugo-notion` is a Go package. To install it, run
+`hugo-notion` is a Ruby gem. Use the `gem` command to install it
 
 ```
-go install https://github.com/nisanthchunduru/hugo-notion
+gem install hugo-notion --prerelease
 ```
+
+Installing the `hugo-notion` ruby gem will install the `huno` command
 
 ## Usage
 
@@ -21,23 +23,22 @@ First, create a Notion integration, generate a secret and connect that integrati
 Go to your Hugo site directory and run
 
 ```
-NOTION_TOKEN=your_notion_secret hugo-notion your_notion_page_url
+NOTION_TOKEN=your_notion_secret huno your_notion_page_url
 ```
 
-`hugo-notion` will sync your Notion page and its children pages to the `content` directory.
+`huno` will sync your Notion page and its children pages to the `content` directory.
 
-`hugo-notion` can also sync your Notion page periodically every 10 seconds. To do so, run
+`huno` can also sync your Notion page periodically every 10 seconds. To do so, run
 
 ```
-hugo-notion -r
+huno -r
 ```
 
 If you'd like to sync at a different frequency (say, 5 seconds), run
 
 ```
-hugo-notion -r 5
+huno -r 5
 ```
-
 To avoid the hassle of providing your Notion token and your Notion page url to `huno` every time you run it, create an .env file
 
 ```
@@ -54,7 +55,3 @@ I recommend that you move one page from Notion to Hugo first, try hugo-notion to
 ## Bug Reports
 
 If you hit a bug, please do report it by creating a GitHub issue
-
-## Ruby implementation
-
-`hugo-notion` was originally implemented in Ruby. This original implementation is available in the `ruby/` directory.
