@@ -75,6 +75,9 @@ func ConvertBlocksToMarkdown(blocks []notionapi.Block) string {
 					markdown = markdown + "\n"
 				}
 			}
+		} else if block.GetType() == "quote" {
+			quoteBlock := block.(*notionapi.QuoteBlock)
+			markdown = convertQuoteToMarkdown(quoteBlock.Quote)
 		} else if block.GetType() == "image" {
 			imageBlock := block.(*notionapi.ImageBlock)
 			markdown = ConvertImageToMarkdown(imageBlock.Image)
@@ -126,6 +129,12 @@ func ConvertNumberedListItemToMarkdown(numbered_list_item notionapi.ListItem) st
 func ConvertCodeToMarkdown(code notionapi.Code) string {
 	markdown := ConvertRichTextsToMarkdown(code.RichText)
 	markdown = "```\n" + markdown + "\n```\n"
+	return markdown
+}
+
+func convertQuoteToMarkdown(code notionapi.Quote) string {
+	markdown := ConvertRichTextsToMarkdown(code.RichText)
+	markdown = "> " + markdown + "\n\n"
 	return markdown
 }
 
