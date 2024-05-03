@@ -1,10 +1,35 @@
 package notion_markdown_exporter
 
 import (
-	"github.com/jomei/notionapi"
-	"strings"
+	"context"
 	"fmt"
+	"strings"
+
+	"github.com/jomei/notionapi"
 )
+
+type NotionMarkdownExporter struct {
+	NotionToken string
+}
+
+func (notionMarkdownExporter NotionMarkdownExporter) exportPageToMarkdown(pageIdString string) (string, error) {
+	jomeiNotionApiClient := notionapi.NewClient(notionapi.Token(notionMarkdownExporter.NotionToken))
+	return ExportPageToMarkdown(jomeiNotionApiClient, pageIdString)
+}
+
+func ExportPageToMarkdown(jomeiNotionApiClient *notionapi.Client, pageIdString string) (string, error) {
+	pagination := notionapi.Pagination{
+		PageSize: 100,
+	}
+	pageId := notionapi.BlockID(pageIdString)
+	getChildPageChildrenResponse, err := jomeiNotionApiClient.Block.GetChildren(context.Background(), pageId, &pagination)
+	if err != nil {
+		return "", err
+	}
+	childPageBlocks := getChildPageChildrenResponse.Results
+	markdown := ConvertBlocksToMarkdown(childPageBlocks)
+	return markdown, nil
+}
 
 func ConvertBlocksToMarkdown(blocks []notionapi.Block) string {
 	var markdowns []string
@@ -27,7 +52,7 @@ func ConvertBlocksToMarkdown(blocks []notionapi.Block) string {
 			bulletedListItemBlock := block.(*notionapi.BulletedListItemBlock)
 			markdown = ConvertBulletedListItemToMarkdown(bulletedListItemBlock.BulletedListItem)
 			if (i + 1) < len(blocks) {
-				nextBlock := blocks[i + 1]
+				nextBlock := blocks[i+1]
 				if nextBlock.GetType() != "bulleted_list_item" {
 					markdown = markdown + "\n"
 				}
@@ -36,7 +61,7 @@ func ConvertBlocksToMarkdown(blocks []notionapi.Block) string {
 			numberedListItemBlock := block.(*notionapi.NumberedListItemBlock)
 			markdown = ConvertNumberedListItemToMarkdown(numberedListItemBlock.NumberedListItem)
 			if (i + 1) < len(blocks) {
-				nextBlock := blocks[i + 1]
+				nextBlock := blocks[i+1]
 				if nextBlock.GetType() != "numbered_list_item" {
 					markdown = markdown + "\n"
 				}
@@ -45,7 +70,7 @@ func ConvertBlocksToMarkdown(blocks []notionapi.Block) string {
 			codeBlock := block.(*notionapi.CodeBlock)
 			markdown = ConvertCodeToMarkdown(codeBlock.Code)
 			if (i + 1) < len(blocks) {
-				nextBlock := blocks[i + 1]
+				nextBlock := blocks[i+1]
 				if nextBlock.GetType() != "numbered_list_item" {
 					markdown = markdown + "\n"
 				}
@@ -100,19 +125,22 @@ func ConvertNumberedListItemToMarkdown(numbered_list_item notionapi.ListItem) st
 
 func ConvertCodeToMarkdown(code notionapi.Code) string {
 	markdown := ConvertRichTextsToMarkdown(code.RichText)
-	markdown = "```\n" + markdown + "```\n"
+	markdown = "```\n" + markdown + "\n```\n"
 	return markdown
 }
 
 func ConvertImageToMarkdown(image notionapi.Image) string {
-	markdown := fmt.Sprintf("![Untitled](%s)", image.File.URL)
+	var markdown string
+	if image.File != nil && image.File.URL != "" {
+		markdown = fmt.Sprintf("![Untitled](%s)", image.File.URL)
+	}
 	return markdown
 }
 
 func ConvertRichTextsToMarkdown(richTexts []notionapi.RichText) string {
 	var markdowns []string
 	for _, block := range richTexts {
-		var markdown string;
+		var markdown string
 		if block.Href == "" {
 			markdown = block.PlainText
 		} else {

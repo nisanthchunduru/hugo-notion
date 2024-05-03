@@ -3,6 +3,7 @@ module github.com/nisanthchunduru/hugo-notion
 go 1.22.2
 
 require (
+	github.com/go-yaml/yaml v2.1.0+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/jomei/notionapi v1.13.0 // indirect
