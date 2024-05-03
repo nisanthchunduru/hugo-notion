@@ -11,7 +11,7 @@ Use Notion as a CMS (Content Management System) for your Hugo site/blog.
 `hugo-notion` is a Go package. To install it, run
 
 ```
-go install https://github.com/nisanthchunduru/hugo-notion
+go install https://github.com/nisanthchunduru/hugo-notion@latest
 ```
 
 ## Usage
@@ -47,7 +47,7 @@ echo 'CONTENT_NOTION_URL=your_notion_page_url >> .env'
 
 ### Migration
 
-For an easy migration to Noiton, you can use my "blog_content" Notion page as a template https://www.notion.so/ blog_content-0f1b55769779411a95df1ee9b4b070c9
+For an easy migration to Noiton, you can use my "blog_content" Notion page as a template [https://www.notion.so/ blog_content-0f1b55769779411a95df1ee9b4b070c9](https://www.notion.so/blog_content-0f1b55769779411a95df1ee9b4b070c9)
 
 I recommend that you move one page from Notion to Hugo first, try hugo-notion to sync that page and once you're happy with hugo-notion, move your other Hugo pages to Notion one by one.
 
