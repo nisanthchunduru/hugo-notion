@@ -20,9 +20,11 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		printErrorAndExit(err)
+	if fileExists(".env") {
+		err := godotenv.Load()
+		if err != nil {
+			printErrorAndExit(err)
+		}
 	}
 
 	notionToken := os.Getenv("NOTION_TOKEN")
@@ -80,7 +82,11 @@ func main() {
 		sync(jomeiNotionApiClient, contentNotionPageId, contentDir)
 		fmt.Println("Done.")
 	}
+}
 
+func fileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return (err == nil)
 }
 
 func syncPeriodically(jomeiNotionApiClient *notionapi.Client, contentNotionPageId string, contentDir string, repeatInterval int) {
