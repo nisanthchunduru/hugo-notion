@@ -1,3 +1,7 @@
+# ⚠️ Deprecation Notice
+
+This directory contains hugo-nation's older Ruby implementation which is functional but not actively maintained anymore
+
 # hugo-notion
 
 Write in Notion. Publish with Hugo.
