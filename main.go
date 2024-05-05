@@ -16,7 +16,7 @@ import (
 	"github.com/go-yaml/yaml"
 	"github.com/joho/godotenv"
 	"github.com/jomei/notionapi"
-	"github.com/nisanthchunduru/hugo-notion/notion_markdown_exporter"
+	"github.com/nisanthchunduru/notion2markdown"
 )
 
 func main() {
@@ -149,13 +149,10 @@ func syncNotionPage(jomeiNotionApiClient *notionapi.Client, pageIdString string,
 				printErrorAndExit(err)
 			}
 
-			getChildPageChildrenResponse, err := jomeiNotionApiClient.Block.GetChildren(context.Background(), childPageId, &pagination)
+			markdown, err := notion2markdown.PageToMarkdown(jomeiNotionApiClient, string(childPageId))
 			if err != nil {
 				printErrorAndExit(err)
 			}
-			childPageBlocks := getChildPageChildrenResponse.Results
-			markdown := notion_markdown_exporter.ConvertBlocksToMarkdown(childPageBlocks)
-
 			hugoPageText := fmt.Sprintf("---\n%s\n---\n\n%s", hugoFrontMatterYaml, markdown)
 			err = os.WriteFile(hugoPageFilePath, []byte(hugoPageText), 0644)
 			if err != nil {
@@ -198,13 +195,10 @@ func syncNotionPage(jomeiNotionApiClient *notionapi.Client, pageIdString string,
 					printErrorAndExit(err)
 				}
 
-				getChildPageChildrenResponse, err := jomeiNotionApiClient.Block.GetChildren(context.Background(), childPageId, &pagination)
+				markdown, err := notion2markdown.PageToMarkdown(jomeiNotionApiClient, string(childPageId))
 				if err != nil {
 					printErrorAndExit(err)
 				}
-				childPageBlocks := getChildPageChildrenResponse.Results
-				markdown := notion_markdown_exporter.ConvertBlocksToMarkdown(childPageBlocks)
-
 				hugoPageText := fmt.Sprintf("---\n%s\n---\n\n%s", hugoFrontMatterYaml, markdown)
 				err = os.WriteFile(hugoPageFilePath, []byte(hugoPageText), 0644)
 				if err != nil {
