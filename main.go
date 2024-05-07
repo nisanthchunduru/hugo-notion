@@ -17,6 +17,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/jomei/notionapi"
 	"github.com/nisanthchunduru/notion2markdown"
+	"github.com/samber/lo"
 )
 
 func main() {
@@ -36,6 +37,9 @@ func main() {
 	contentDir := os.Getenv("CONTENT_DIR")
 	if contentDir == "" {
 		contentDir, _ = filepath.Abs("./content")
+	} else if strings.HasPrefix(contentDir, "~/") {
+		homeDir, _ := os.UserHomeDir()
+		contentDir = filepath.Join(homeDir, contentDir[2:])
 	}
 
 	var contentNotionUrl string
@@ -106,14 +110,14 @@ func syncPeriodically(jomeiNotionApiClient *notionapi.Client, contentNotionPageI
 }
 
 func sync(jomeiNotionApiClient *notionapi.Client, contentNotionPageId string, contentDir string) {
-	syncNotionPage(jomeiNotionApiClient, contentNotionPageId, contentDir)
+	syncPage(jomeiNotionApiClient, contentNotionPageId, contentDir)
 }
 
 func isValidUrl(url string) bool {
 	return govalidator.IsRequestURL(url)
 }
 
-func syncNotionPage(jomeiNotionApiClient *notionapi.Client, pageIdString string, destinationDir string) {
+func syncPage(jomeiNotionApiClient *notionapi.Client, pageIdString string, destinationDir string) {
 	pageId := notionapi.BlockID(pageIdString)
 	pagination := notionapi.Pagination{
 		PageSize: 100,
@@ -123,6 +127,12 @@ func syncNotionPage(jomeiNotionApiClient *notionapi.Client, pageIdString string,
 		printErrorAndExit(err)
 	}
 	for _, _block := range getChildrenResponse.Results {
+		hugoPageDir := destinationDir
+		existingHugoPageFilePaths, err := filepath.Glob(filepath.Join(hugoPageDir, "*.md"))
+		if err != nil {
+			printErrorAndExit(err)
+		}
+		syncedHugoPageFilePaths := []string{}
 		if _block.GetType() == "child_page" {
 			block := _block.(*notionapi.ChildPageBlock)
 			childPageId := block.GetID()
@@ -130,12 +140,14 @@ func syncNotionPage(jomeiNotionApiClient *notionapi.Client, pageIdString string,
 			childPageLastEditedAt := *block.GetLastEditedTime()
 
 			hugoPageFileName := strings.ReplaceAll(childPageTitle, " ", "-") + ".md"
-			hugoPageDir := destinationDir
 			err = os.MkdirAll(hugoPageDir, 0755)
 			if err != nil {
 				printErrorAndExit(err)
 			}
 			hugoPageFilePath := filepath.Join(destinationDir, hugoPageFileName)
+
+			syncedHugoPageFilePaths = append(syncedHugoPageFilePaths, hugoPageFilePath)
+
 			if !fileOlderThan(hugoPageFilePath, childPageLastEditedAt) {
 				continue
 			}
@@ -159,54 +171,73 @@ func syncNotionPage(jomeiNotionApiClient *notionapi.Client, pageIdString string,
 				printErrorAndExit(err)
 			}
 		} else if _block.GetType() == "child_database" {
-			block := _block.(*notionapi.ChildDatabaseBlock)
-			childDatabaseId := notionapi.DatabaseID(block.GetID())
-			childDatabaseTitle := block.ChildDatabase.Title
-			databaseQueryRequest := notionapi.DatabaseQueryRequest{
-				PageSize: 100,
-			}
-			databaseQueryResponse, err := jomeiNotionApiClient.Database.Query(context.Background(), childDatabaseId, &databaseQueryRequest)
-			if err != nil {
-				printErrorAndExit(err)
-			}
-			for _, block := range databaseQueryResponse.Results {
-				childPageId := notionapi.BlockID(block.ID)
-				childPageTitleProperty := block.Properties["Name"].(*notionapi.TitleProperty)
-				childPageTitle := childPageTitleProperty.Title[0].PlainText
-				childPageLastEditedAt := block.LastEditedTime
+			syncChildDatabasePages(jomeiNotionApiClient, _block, destinationDir)
+		}
+		oldHugoPageFilePaths, _ := lo.Difference(existingHugoPageFilePaths, syncedHugoPageFilePaths)
+		deleteFiles(oldHugoPageFilePaths)
+	}
+}
 
-				hugoPageFileName := strings.ReplaceAll(childPageTitle, " ", "-") + ".md"
-				hugoPageDir := filepath.Join(destinationDir, childDatabaseTitle)
-				err = os.MkdirAll(hugoPageDir, 0755)
-				if err != nil {
-					printErrorAndExit(err)
-				}
-				hugoPageFilePath := filepath.Join(hugoPageDir, hugoPageFileName)
-				if !fileOlderThan(hugoPageFilePath, childPageLastEditedAt) {
-					continue
-				}
+func syncChildDatabasePages(jomeiNotionApiClient *notionapi.Client, _block notionapi.Block, destinationDir string) {
+	block := _block.(*notionapi.ChildDatabaseBlock)
+	childDatabaseId := notionapi.DatabaseID(block.GetID())
+	childDatabaseTitle := block.ChildDatabase.Title
 
-				hugoPageFrontMatterMap := make(map[string]string)
-				hugoPageFrontMatterMap["title"] = childPageTitle
-				childPageDateProperty := block.Properties["date"].(*notionapi.DateProperty)
-				hugoPageFrontMatterMap["date"] = childPageDateProperty.Date.Start.String()
-				hugoFrontMatterYaml, err := yaml.Marshal(hugoPageFrontMatterMap)
-				if err != nil {
-					printErrorAndExit(err)
-				}
+	hugoPageDir := filepath.Join(destinationDir, childDatabaseTitle)
+	existingHugoPageFilePaths, err := filepath.Glob(filepath.Join(hugoPageDir, "*.md"))
+	if err != nil {
+		printErrorAndExit(err)
+	}
+	syncedHugoPageFilePaths := []string{}
 
-				markdown, err := notion2markdown.PageToMarkdown(jomeiNotionApiClient, string(childPageId))
-				if err != nil {
-					printErrorAndExit(err)
-				}
-				hugoPageText := fmt.Sprintf("---\n%s\n---\n\n%s", hugoFrontMatterYaml, markdown)
-				err = os.WriteFile(hugoPageFilePath, []byte(hugoPageText), 0644)
-				if err != nil {
-					printErrorAndExit(err)
-				}
-			}
+	databaseQueryRequest := notionapi.DatabaseQueryRequest{
+		PageSize: 100,
+	}
+	databaseQueryResponse, err := jomeiNotionApiClient.Database.Query(context.Background(), childDatabaseId, &databaseQueryRequest)
+	if err != nil {
+		printErrorAndExit(err)
+	}
+	for _, block := range databaseQueryResponse.Results {
+		childPageId := notionapi.BlockID(block.ID)
+		childPageTitleProperty := block.Properties["Name"].(*notionapi.TitleProperty)
+		childPageTitle := childPageTitleProperty.Title[0].PlainText
+		childPageLastEditedAt := block.LastEditedTime
+
+		hugoPageFileName := strings.ReplaceAll(childPageTitle, " ", "-") + ".md"
+		err = os.MkdirAll(hugoPageDir, 0755)
+		if err != nil {
+			printErrorAndExit(err)
+		}
+		hugoPageFilePath := filepath.Join(hugoPageDir, hugoPageFileName)
+
+		syncedHugoPageFilePaths = append(syncedHugoPageFilePaths, hugoPageFilePath)
+
+		if !fileOlderThan(hugoPageFilePath, childPageLastEditedAt) {
+			continue
+		}
+
+		hugoPageFrontMatterMap := make(map[string]string)
+		hugoPageFrontMatterMap["title"] = childPageTitle
+		childPageDateProperty := block.Properties["date"].(*notionapi.DateProperty)
+		hugoPageFrontMatterMap["date"] = childPageDateProperty.Date.Start.String()
+		hugoFrontMatterYaml, err := yaml.Marshal(hugoPageFrontMatterMap)
+		if err != nil {
+			printErrorAndExit(err)
+		}
+
+		markdown, err := notion2markdown.PageToMarkdown(jomeiNotionApiClient, string(childPageId))
+		if err != nil {
+			printErrorAndExit(err)
+		}
+		hugoPageText := fmt.Sprintf("---\n%s\n---\n\n%s", hugoFrontMatterYaml, markdown)
+		err = os.WriteFile(hugoPageFilePath, []byte(hugoPageText), 0644)
+		if err != nil {
+			printErrorAndExit(err)
 		}
 	}
+
+	oldHugoPageFilePaths, _ := lo.Difference(existingHugoPageFilePaths, syncedHugoPageFilePaths)
+	deleteFiles(oldHugoPageFilePaths)
 }
 
 func fileOlderThan(filePath string, _time time.Time) bool {
@@ -217,6 +248,15 @@ func fileOlderThan(filePath string, _time time.Time) bool {
 		}
 	}
 	return true
+}
+
+func deleteFiles(filePaths []string) {
+	for _, filePath := range filePaths {
+		err := os.Remove(filePath)
+		if err != nil {
+			printErrorAndExit(err)
+		}
+	}
 }
 
 func printErrorAndExit(err error) {
