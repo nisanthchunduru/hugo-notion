@@ -11,7 +11,7 @@ hugo-notion gives you the ability to use Notion as a CMS (Content Management Sys
 `hugo-notion` is a Go package. To install it, run
 
 ```
-go install https://github.com/nisanthchunduru/hugo-notion@latest
+go install github.com/nisanthchunduru/hugo-notion@latest
 ```
 
 ## Usage
