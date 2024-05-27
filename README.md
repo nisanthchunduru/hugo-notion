@@ -51,10 +51,16 @@ For an easy migration to Notion, you can use my "blog_content" Notion page as a 
 
 I recommend that you move one page from Notion to Hugo first, try hugo-notion to sync that page and once you're happy with hugo-notion, move your other Hugo pages to Notion one by one.
 
-## Bug Reports
+## Bug reports
 
 If you hit a bug, please do report it by creating a GitHub issue
 
 ## Ruby implementation
 
-`hugo-notion` was originally implemented in Ruby. This original implementation is available in the `ruby/` directory.
+`hugo-notion` was originally implemented in Ruby. The Ruby implemetation is deprecated. However, the implementation is still available in the `ruby/` directory for perusalf. 
+
+## Similar projects
+
+The below are similar projects that didn't meet my needs or thatf I had discovered later
+
+- https://github.com/dobassy/notion-hugo-exporter
