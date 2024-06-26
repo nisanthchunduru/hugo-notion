@@ -1,6 +1,8 @@
 FROM golang:1.22-alpine AS blog
 
-RUN go install github.com/nisanthchunduru/hugo-notion@latest
+ARG HUGO_NOTION_VERSION=latest
+
+RUN go install github.com/nisanthchunduru/hugo-notion@${HUGO_NOTION_VERSION}
 
 WORKDIR /opt/blog
 
