@@ -126,13 +126,13 @@ func syncPage(jomeiNotionApiClient *notionapi.Client, pageIdString string, desti
 	if err != nil {
 		printErrorAndExit(err)
 	}
+	syncedHugoPageFilePaths := []string{}
+	hugoPageDir := destinationDir
+	existingHugoPageFilePaths, err := filepath.Glob(filepath.Join(hugoPageDir, "*.md"))
+	if err != nil {
+		printErrorAndExit(err)
+	}
 	for _, _block := range getChildrenResponse.Results {
-		hugoPageDir := destinationDir
-		existingHugoPageFilePaths, err := filepath.Glob(filepath.Join(hugoPageDir, "*.md"))
-		if err != nil {
-			printErrorAndExit(err)
-		}
-		syncedHugoPageFilePaths := []string{}
 		if _block.GetType() == "child_page" {
 			block := _block.(*notionapi.ChildPageBlock)
 			childPageId := block.GetID()
@@ -173,9 +173,9 @@ func syncPage(jomeiNotionApiClient *notionapi.Client, pageIdString string, desti
 		} else if _block.GetType() == "child_database" {
 			syncChildDatabasePages(jomeiNotionApiClient, _block, destinationDir)
 		}
-		oldHugoPageFilePaths, _ := lo.Difference(existingHugoPageFilePaths, syncedHugoPageFilePaths)
-		deleteFiles(oldHugoPageFilePaths)
 	}
+	oldHugoPageFilePaths, _ := lo.Difference(existingHugoPageFilePaths, syncedHugoPageFilePaths)
+	deleteFiles(oldHugoPageFilePaths)
 }
 
 func syncChildDatabasePages(jomeiNotionApiClient *notionapi.Client, _block notionapi.Block, destinationDir string) {
