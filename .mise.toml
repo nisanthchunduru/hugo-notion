@@ -1,0 +1,4 @@
+[tasks]
+
+docker-publish="docker buildx build -t nisanth074/hugo-notion:latest . --push"
+docker-publish-amd64="docker buildx build --platform linux/amd64 -t nisanth074/hugo-notion:latest . --push"
