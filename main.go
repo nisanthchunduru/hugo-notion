@@ -155,7 +155,7 @@ func syncPage(jomeiNotionApiClient *notionapi.Client, pageIdString string, desti
 			hugoPageFrontMatterMap := make(map[string]string)
 			hugoPageFrontMatterMap["title"] = childPageTitle
 			hugoPageFrontMatterMap["type"] = childPageTitle
-			hugoPageFrontMatterMap["date"] = block.GetLastEditedTime().Format(time.RFC3339)
+			hugoPageFrontMatterMap["date"] = childPageLastEditedAt.Format(time.RFC3339)
 			hugoFrontMatterYaml, err := yaml.Marshal(hugoPageFrontMatterMap)
 			if err != nil {
 				printErrorAndExit(err)
@@ -170,6 +170,7 @@ func syncPage(jomeiNotionApiClient *notionapi.Client, pageIdString string, desti
 			if err != nil {
 				printErrorAndExit(err)
 			}
+			os.Chtimes(hugoPageFilePath, childPageLastEditedAt, childPageLastEditedAt)
 		} else if _block.GetType() == "child_database" {
 			syncChildDatabasePages(jomeiNotionApiClient, _block, destinationDir)
 		}
@@ -234,6 +235,7 @@ func syncChildDatabasePages(jomeiNotionApiClient *notionapi.Client, _block notio
 		if err != nil {
 			printErrorAndExit(err)
 		}
+		os.Chtimes(hugoPageFilePath, childPageLastEditedAt, childPageLastEditedAt)
 	}
 
 	oldHugoPageFilePaths, _ := lo.Difference(existingHugoPageFilePaths, syncedHugoPageFilePaths)
