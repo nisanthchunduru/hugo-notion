@@ -1,5 +1,7 @@
 FROM golang:1.22-alpine AS hugo-notion
 
+RUN apk add --no-cache git
+
 ARG HUGO_NOTION_VERSION=latest
 
 RUN go install github.com/nisanthchunduru/hugo-notion@${HUGO_NOTION_VERSION}
