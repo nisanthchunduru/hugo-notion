@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	if fileExists(".env") {
+	if doesFileExist(".env") {
 		err := godotenv.Load()
 		if err != nil {
 			printErrorAndExit(err)
@@ -88,7 +88,7 @@ func main() {
 	}
 }
 
-func fileExists(filePath string) bool {
+func doesFileExist(filePath string) bool {
 	_, err := os.Stat(filePath)
 	return (err == nil)
 }
@@ -126,6 +126,7 @@ func syncPage(jomeiNotionApiClient *notionapi.Client, pageIdString string, desti
 	if err != nil {
 		printErrorAndExit(err)
 	}
+	syncTime := time.Now()
 	syncedHugoPageFilePaths := []string{}
 	hugoPageDir := destinationDir
 	existingHugoPageFilePaths, err := filepath.Glob(filepath.Join(hugoPageDir, "*.md"))
@@ -147,8 +148,7 @@ func syncPage(jomeiNotionApiClient *notionapi.Client, pageIdString string, desti
 			hugoPageFilePath := filepath.Join(destinationDir, hugoPageFileName)
 
 			syncedHugoPageFilePaths = append(syncedHugoPageFilePaths, hugoPageFilePath)
-
-			if !fileOlderThan(hugoPageFilePath, childPageLastEditedAt) {
+			if doesFileExist(hugoPageFilePath) && !isFileModTimeRoundedToNearestMinuteLessThanOrEqualTo(hugoPageFilePath, childPageLastEditedAt) {
 				continue
 			}
 
@@ -170,7 +170,7 @@ func syncPage(jomeiNotionApiClient *notionapi.Client, pageIdString string, desti
 			if err != nil {
 				printErrorAndExit(err)
 			}
-			os.Chtimes(hugoPageFilePath, childPageLastEditedAt, childPageLastEditedAt)
+			os.Chtimes(hugoPageFilePath, syncTime, syncTime)
 		} else if _block.GetType() == "child_database" {
 			syncChildDatabasePages(jomeiNotionApiClient, _block, destinationDir)
 		}
@@ -183,12 +183,12 @@ func syncChildDatabasePages(jomeiNotionApiClient *notionapi.Client, _block notio
 	block := _block.(*notionapi.ChildDatabaseBlock)
 	childDatabaseId := notionapi.DatabaseID(block.GetID())
 	childDatabaseTitle := block.ChildDatabase.Title
-
 	hugoPageDir := filepath.Join(destinationDir, childDatabaseTitle)
 	existingHugoPageFilePaths, err := filepath.Glob(filepath.Join(hugoPageDir, "*.md"))
 	if err != nil {
 		printErrorAndExit(err)
 	}
+	syncTime := time.Now()
 	syncedHugoPageFilePaths := []string{}
 
 	databaseQueryRequest := notionapi.DatabaseQueryRequest{
@@ -210,10 +210,8 @@ func syncChildDatabasePages(jomeiNotionApiClient *notionapi.Client, _block notio
 			printErrorAndExit(err)
 		}
 		hugoPageFilePath := filepath.Join(hugoPageDir, hugoPageFileName)
-
 		syncedHugoPageFilePaths = append(syncedHugoPageFilePaths, hugoPageFilePath)
-
-		if !fileOlderThan(hugoPageFilePath, childPageLastEditedAt) {
+		if doesFileExist(hugoPageFilePath) && !isFileModTimeRoundedToNearestMinuteLessThanOrEqualTo(hugoPageFilePath, childPageLastEditedAt) {
 			continue
 		}
 
@@ -235,14 +233,14 @@ func syncChildDatabasePages(jomeiNotionApiClient *notionapi.Client, _block notio
 		if err != nil {
 			printErrorAndExit(err)
 		}
-		os.Chtimes(hugoPageFilePath, childPageLastEditedAt, childPageLastEditedAt)
+		os.Chtimes(hugoPageFilePath, syncTime, syncTime)
 	}
 
 	oldHugoPageFilePaths, _ := lo.Difference(existingHugoPageFilePaths, syncedHugoPageFilePaths)
 	deleteFiles(oldHugoPageFilePaths)
 }
 
-func fileOlderThan(filePath string, _time time.Time) bool {
+func isFileOlderThan(filePath string, _time time.Time) bool {
 	fileInfo, err := os.Stat(filePath)
 	if err == nil {
 		if fileInfo.ModTime().After(_time) {
@@ -250,6 +248,15 @@ func fileOlderThan(filePath string, _time time.Time) bool {
 		}
 	}
 	return true
+}
+
+func isFileModTimeRoundedToNearestMinuteLessThanOrEqualTo(filePath string, _time time.Time) bool {
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		printErrorAndExit(err)
+	}
+	fileModTimeRoundedToNearestMinute := fileInfo.ModTime().Truncate(time.Minute)
+	return _time.After(fileModTimeRoundedToNearestMinute)
 }
 
 func deleteFiles(filePaths []string) {
