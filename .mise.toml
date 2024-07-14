@@ -1,4 +1,6 @@
 [tasks]
 
-docker-publish="docker buildx build --build-arg HUGO_NOTION_VERSION=$(git rev-parse HEAD) -t nisanth074/hugo-notion:latest -t nisanth074/hugo-notion:$(git rev-parse HEAD) . --push"
+docker-create-multiplatform-builder="docker buildx create --name multiplatform-builder --use"
+docker-publish="docker buildx build --build-arg HUGO_NOTION_VERSION=$(git rev-parse HEAD) --platform linux/amd64,linux/arm64 -t nisanth074/hugo-notion:latest -t nisanth074/hugo-notion:$(git rev-parse HEAD) . --push"
+docker-publish-arm64="docker buildx build --build-arg HUGO_NOTION_VERSION=$(git rev-parse HEAD) --platform linux/arm64 -t nisanth074/hugo-notion:latest -t nisanth074/hugo-notion:$(git rev-parse HEAD) . --push"
 docker-publish-amd64="docker buildx build --build-arg HUGO_NOTION_VERSION=$(git rev-parse HEAD) --platform linux/amd64 -t nisanth074/hugo-notion:latest -t nisanth074/hugo-notion:$(git rev-parse HEAD) . --push"
