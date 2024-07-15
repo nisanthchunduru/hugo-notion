@@ -14,6 +14,29 @@ hugo-notion gives you the ability to use Notion as a CMS (Content Management Sys
 go install github.com/nisanthchunduru/hugo-notion@latest
 ```
 
+`hugo-notion` is also available as a Docker image if you don't have Go lang installed or if you'd like to run `hugo-notion` in a Docker container. Here's an example `docker-compose.yml` that starts `hugo-notion` in a Docker container
+
+```yaml
+version: '3.8'
+
+services:
+  hugo:
+    build:
+      context: .
+      dockerfile: Dockerfile.development
+    volumes:
+      - .:/opt/blog/
+    ports:
+      - "1313:1313"
+    command: hugo server --watch --buildDrafts --bind 0.0.0.0 --poll 500ms
+  hugo-notion:
+    image: nisanth074/hugo-notion
+    volumes:
+      - ./content:/opt/blog/content
+    env_file: .env
+    working_dir: /opt/blog
+```
+
 ## Usage
 
 First, create a Notion integration, generate a secret and connect that integration to the Notion page https://developers.notion.com/docs/create-a-notion-integration#getting-started
