@@ -2,7 +2,7 @@
 
 Author your [Hugo](https://gohugo.io/) blog's blog posts in [Notion](https://www.notion.so/).
 
-hugo-notion gives you the ability to use Notion as a CMS (Content Management System) for your Hugo site/blog.
+hugo-notion gives you the ability to use Notion as a CMS (Content Management System) for your Hugo blog/site.
 
 `hugo-notion` is a command line (CLI) tool that syncs your Notion page url to your Hugo site's/blog's `content` directory.
 
