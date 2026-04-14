@@ -1,6 +1,6 @@
 # hugo-notion
 
-Author your [Hugo](https://gohugo.io/) blog's blog posts in [Notion](https://www.notion.so/).
+Author your [Hugo](https://gohugo.io/) blog's posts in [Notion](https://www.notion.so/).
 
 hugo-notion gives you the ability to use Notion as a CMS (Content Management System) for your Hugo blog/site.
 
